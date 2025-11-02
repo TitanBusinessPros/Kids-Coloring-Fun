@@ -236,7 +236,7 @@
         const imageLibrary = {
             1: [
                 // Section 1 images - replace these URLs with your own
-                'https://github.com/TitanBusinessPros/KCF-Animals/raw/main/Alligator.png',
+                'https://via.placeholder.com/400x400/ffffff/000000?text=Section+1+Image+1',
                 'https://via.placeholder.com/400x400/ffffff/000000?text=Section+1+Image+2',
                 'https://via.placeholder.com/400x400/ffffff/000000?text=Section+1+Image+3',
                 'https://via.placeholder.com/400x400/ffffff/000000?text=Section+1+Image+4'
@@ -302,16 +302,26 @@
             document.getElementById('coloringArea').classList.add('active');
             
             canvas = document.getElementById('coloringCanvas');
-            ctx = canvas.getContext('2d');
+            ctx = canvas.getContext('2d', { willReadFrequently: true });
+            
+            // Load image through a CORS proxy for GitHub raw links
+            const proxyUrl = 'https://corsproxy.io/?' + encodeURIComponent(imgUrl);
             
             baseImage = new Image();
-            baseImage.crossOrigin = 'anonymous';
             baseImage.onload = function() {
                 canvas.width = baseImage.width;
                 canvas.height = baseImage.height;
                 ctx.drawImage(baseImage, 0, 0);
             };
-            baseImage.src = imgUrl;
+            baseImage.onerror = function() {
+                // Try loading without proxy as fallback
+                baseImage.onerror = function() {
+                    alert('Could not load image. Please check the URL or try a different image.');
+                    backToGallery();
+                };
+                baseImage.src = imgUrl;
+            };
+            baseImage.src = proxyUrl;
             
             setupCanvas();
         }
