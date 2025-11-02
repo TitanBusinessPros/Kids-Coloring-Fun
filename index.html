@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Coloring Book App</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Comic Sans MS', cursive, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        
+        h1 {
+            text-align: center;
+            color: #667eea;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+        }
+        
+        .sections {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .section-btn {
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 15px;
+            font-size: 1.3em;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            font-weight: bold;
+        }
+        
+        .section-btn:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+        }
+        
+        .section-btn.active {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+        
+        .images-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .image-card {
+            border: 3px solid #667eea;
+            border-radius: 10px;
+            padding: 10px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            background: white;
+        }
+        
+        .image-card:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+        
+        .image-card img {
+            width: 100%;
+            height: 200px;
+            object-fit: contain;
+            border-radius: 5px;
+        }
+        
+        .coloring-area {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .coloring-area.active {
+            display: flex;
+        }
+        
+        .toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 20px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 15px;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .tool-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .tool-btn {
+            padding: 12px 24px;
+            border: 2px solid #667eea;
+            background: white;
+            color: #667eea;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: bold;
+            transition: all 0.2s;
+        }
+        
+        .tool-btn:hover {
+            background: #667eea;
+            color: white;
+        }
+        
+        .tool-btn.active {
+            background: #667eea;
+            color: white;
+        }
+        
+        .color-picker {
+            width: 60px;
+            height: 40px;
+            border: 2px solid #667eea;
+            border-radius: 10px;
+            cursor: pointer;
+        }
+        
+        .brush-size {
+            width: 100px;
+        }
+        
+        .canvas-container {
+            position: relative;
+            display: inline-block;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        
+        canvas {
+            display: block;
+            max-width: 100%;
+            height: auto;
+        }
+        
+        .back-btn {
+            padding: 12px 24px;
+            background: #6c757d;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+        
+        .back-btn:hover {
+            background: #5a6268;
+        }
+        
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎨 Coloring Book 🎨</h1>
+        
+        <div id="sectionSelection">
+            <div class="sections">
+                <button class="section-btn" onclick="selectSection(1)">Section 1</button>
+                <button class="section-btn" onclick="selectSection(2)">Section 2</button>
+                <button class="section-btn" onclick="selectSection(3)">Section 3</button>
+                <button class="section-btn" onclick="selectSection(4)">Section 4</button>
+            </div>
+            
+            <div id="imagesGrid" class="images-grid"></div>
+        </div>
+        
+        <div id="coloringArea" class="coloring-area">
+            <button class="back-btn" onclick="backToGallery()">← Back to Gallery</button>
+            
+            <div class="toolbar">
+                <div class="tool-group">
+                    <button class="tool-btn active" id="drawBtn" onclick="setTool('draw')">✏️ Draw</button>
+                    <button class="tool-btn" id="fillBtn" onclick="setTool('fill')">🪣 Fill</button>
+                    <button class="tool-btn" onclick="clearCanvas()">🗑️ Clear</button>
+                </div>
+                
+                <div class="tool-group">
+                    <label for="colorPicker">Color:</label>
+                    <input type="color" id="colorPicker" class="color-picker" value="#ff0000">
+                </div>
+                
+                <div class="tool-group">
+                    <label for="brushSize">Brush Size:</label>
+                    <input type="range" id="brushSize" class="brush-size" min="1" max="50" value="5">
+                    <span id="brushSizeValue">5</span>
+                </div>
+            </div>
+            
+            <div class="canvas-container">
+                <canvas id="coloringCanvas"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ===== IMAGE CONFIGURATION =====
+        // Add your image URLs here for each section
+        const imageLibrary = {
+            1: [
+                // Section 1 images - replace these URLs with your own
+                'https://via.placeholder.com/400x400/ffffff/000000?text=Section+1+Image+1',
+                'https://via.placeholder.com/400x400/ffffff/000000?text=Section+1+Image+2',
+                'https://via.placeholder.com/400x400/ffffff/000000?text=Section+1+Image+3',
+                'https://via.placeholder.com/400x400/ffffff/000000?text=Section+1+Image+4'
+            ],
+            2: [
+                // Section 2 images - replace these URLs with your own
+                'https://via.placeholder.com/400x400/ffffff/000000?text=Section+2+Image+1',
+                'https://via.placeholder.com/400x400/ffffff/000000?text=Section+2+Image+2',
+                'https://via.placeholder.com/400x400/ffffff/000000?text=Section+2+Image+3',
+                'https://via.placeholder.com/400x400/ffffff/000000?text=Section+2+Image+4'
+            ],
+            3: [
+                // Section 3 images - replace these URLs with your own
+                'https://via.placeholder.com/400x400/ffffff/000000?text=Section+3+Image+1',
+                'https://via.placeholder.com/400x400/ffffff/000000?text=Section+3+Image+2',
+                'https://via.placeholder.com/400x400/ffffff/000000?text=Section+3+Image+3',
+                'https://via.placeholder.com/400x400/ffffff/000000?text=Section+3+Image+4'
+            ],
+            4: [
+                // Section 4 images - replace these URLs with your own
+                'https://via.placeholder.com/400x400/ffffff/000000?text=Section+4+Image+1',
+                'https://via.placeholder.com/400x400/ffffff/000000?text=Section+4+Image+2',
+                'https://via.placeholder.com/400x400/ffffff/000000?text=Section+4+Image+3',
+                'https://via.placeholder.com/400x400/ffffff/000000?text=Section+4+Image+4'
+            ]
+        };
+        // ===== END IMAGE CONFIGURATION =====
+
+        let currentSection = 1;
+        let currentTool = 'draw';
+        let isDrawing = false;
+        let canvas, ctx, baseImage;
+        
+        function selectSection(section) {
+            currentSection = section;
+            const buttons = document.querySelectorAll('.section-btn');
+            buttons.forEach((btn, idx) => {
+                btn.classList.toggle('active', idx + 1 === section);
+            });
+            displayImages(section);
+        }
+        
+        function displayImages(section) {
+            const grid = document.getElementById('imagesGrid');
+            grid.innerHTML = '';
+            
+            imageLibrary[section].forEach((imgUrl, idx) => {
+                const card = document.createElement('div');
+                card.className = 'image-card';
+                card.onclick = () => openColoringPage(imgUrl);
+                
+                const img = document.createElement('img');
+                img.src = imgUrl;
+                img.alt = `Section ${section} Image ${idx + 1}`;
+                
+                card.appendChild(img);
+                grid.appendChild(card);
+            });
+        }
+        
+        function openColoringPage(imgUrl) {
+            document.getElementById('sectionSelection').classList.add('hidden');
+            document.getElementById('coloringArea').classList.add('active');
+            
+            canvas = document.getElementById('coloringCanvas');
+            ctx = canvas.getContext('2d');
+            
+            baseImage = new Image();
+            baseImage.crossOrigin = 'anonymous';
+            baseImage.onload = function() {
+                canvas.width = baseImage.width;
+                canvas.height = baseImage.height;
+                ctx.drawImage(baseImage, 0, 0);
+            };
+            baseImage.src = imgUrl;
+            
+            setupCanvas();
+        }
+        
+        function backToGallery() {
+            document.getElementById('sectionSelection').classList.remove('hidden');
+            document.getElementById('coloringArea').classList.remove('active');
+        }
+        
+        function setupCanvas() {
+            canvas.addEventListener('mousedown', startDrawing);
+            canvas.addEventListener('mousemove', draw);
+            canvas.addEventListener('mouseup', stopDrawing);
+            canvas.addEventListener('mouseout', stopDrawing);
+            
+            canvas.addEventListener('touchstart', handleTouch);
+            canvas.addEventListener('touchmove', handleTouch);
+            canvas.addEventListener('touchend', stopDrawing);
+            
+            document.getElementById('brushSize').addEventListener('input', function(e) {
+                document.getElementById('brushSizeValue').textContent = e.target.value;
+            });
+        }
+        
+        function setTool(tool) {
+            currentTool = tool;
+            document.getElementById('drawBtn').classList.toggle('active', tool === 'draw');
+            document.getElementById('fillBtn').classList.toggle('active', tool === 'fill');
+        }
+        
+        function startDrawing(e) {
+            if (currentTool === 'fill') {
+                const rect = canvas.getBoundingClientRect();
+                const x = Math.floor(e.clientX - rect.left);
+                const y = Math.floor(e.clientY - rect.top);
+                const color = document.getElementById('colorPicker').value;
+                floodFill(x, y, color);
+            } else {
+                isDrawing = true;
+                draw(e);
+            }
+        }
+        
+        function draw(e) {
+            if (!isDrawing || currentTool !== 'draw') return;
+            
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            
+            ctx.strokeStyle = document.getElementById('colorPicker').value;
+            ctx.lineWidth = document.getElementById('brushSize').value;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            
+            ctx.lineTo(x, y);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(x, y);
+        }
+        
+        function stopDrawing() {
+            isDrawing = false;
+            ctx.beginPath();
+        }
+        
+        function handleTouch(e) {
+            e.preventDefault();
+            const touch = e.touches[0];
+            const mouseEvent = new MouseEvent(e.type === 'touchstart' ? 'mousedown' : e.type === 'touchmove' ? 'mousemove' : 'mouseup', {
+                clientX: touch.clientX,
+                clientY: touch.clientY
+            });
+            canvas.dispatchEvent(mouseEvent);
+        }
+        
+        function floodFill(x, y, fillColor) {
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const targetColor = getPixelColor(imageData, x, y);
+            const fillRGB = hexToRgb(fillColor);
+            
+            if (colorsMatch(targetColor, fillRGB)) return;
+            
+            const pixelsToCheck = [[x, y]];
+            const width = imageData.width;
+            const height = imageData.height;
+            
+            while (pixelsToCheck.length > 0) {
+                const [currentX, currentY] = pixelsToCheck.pop();
+                
+                if (currentX < 0 || currentX >= width || currentY < 0 || currentY >= height) continue;
+                
+                const currentColor = getPixelColor(imageData, currentX, currentY);
+                
+                if (colorsMatch(currentColor, targetColor)) {
+                    setPixelColor(imageData, currentX, currentY, fillRGB);
+                    
+                    pixelsToCheck.push([currentX + 1, currentY]);
+                    pixelsToCheck.push([currentX - 1, currentY]);
+                    pixelsToCheck.push([currentX, currentY + 1]);
+                    pixelsToCheck.push([currentX, currentY - 1]);
+                }
+            }
+            
+            ctx.putImageData(imageData, 0, 0);
+        }
+        
+        function getPixelColor(imageData, x, y) {
+            const index = (y * imageData.width + x) * 4;
+            return {
+                r: imageData.data[index],
+                g: imageData.data[index + 1],
+                b: imageData.data[index + 2],
+                a: imageData.data[index + 3]
+            };
+        }
+        
+        function setPixelColor(imageData, x, y, color) {
+            const index = (y * imageData.width + x) * 4;
+            imageData.data[index] = color.r;
+            imageData.data[index + 1] = color.g;
+            imageData.data[index + 2] = color.b;
+            imageData.data[index + 3] = 255;
+        }
+        
+        function hexToRgb(hex) {
+            const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+            return result ? {
+                r: parseInt(result[1], 16),
+                g: parseInt(result[2], 16),
+                b: parseInt(result[3], 16)
+            } : null;
+        }
+        
+        function colorsMatch(c1, c2) {
+            return c1.r === c2.r && c1.g === c2.g && c1.b === c2.b;
+        }
+        
+        function clearCanvas() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.drawImage(baseImage, 0, 0);
+        }
+        
+        // Initialize with Section 1
+        selectSection(1);
+    </script>
+</body>
+</html>
