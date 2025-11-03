@@ -211,7 +211,7 @@
             background: rgba(40, 40, 60, 0.8);
         }
         
-        .brush-size {
+        .brush-size, .opacity-slider {
             width: 120px;
         }
         
@@ -296,11 +296,12 @@
             gap: 8px;
             justify-content: center;
             margin-top: 10px;
+            max-width: 500px;
         }
         
         .color-swatch {
-            width: 35px;
-            height: 35px;
+            width: 30px;
+            height: 30px;
             border-radius: 50%;
             cursor: pointer;
             border: 2px solid rgba(255, 255, 255, 0.5);
@@ -384,6 +385,10 @@
             .action-btn {
                 width: 100%;
             }
+            
+            .color-palette {
+                max-width: 100%;
+            }
         }
     </style>
 </head>
@@ -432,6 +437,12 @@
                 </div>
                 
                 <div class="tool-group">
+                    <label for="opacitySlider">Opacity:</label>
+                    <input type="range" id="opacitySlider" class="opacity-slider" min="1" max="100" value="100">
+                    <span id="opacityValue">100%</span>
+                </div>
+                
+                <div class="tool-group">
                     <label>Brush Type:</label>
                     <div class="brush-type-selector">
                         <button class="brush-type-btn active" id="markerBtn" onclick="setBrushType('marker')">🖊️ Marker</button>
@@ -441,6 +452,7 @@
                 </div>
                 
                 <div class="color-palette">
+                    <!-- Original Colors -->
                     <div class="color-swatch" style="background-color: #ff4757;" onclick="setColor('#ff4757')"></div>
                     <div class="color-swatch" style="background-color: #2ed573;" onclick="setColor('#2ed573')"></div>
                     <div class="color-swatch" style="background-color: #1e90ff;" onclick="setColor('#1e90ff')"></div>
@@ -449,6 +461,23 @@
                     <div class="color-swatch" style="background-color: #a55eea;" onclick="setColor('#a55eea')"></div>
                     <div class="color-swatch" style="background-color: #ff9ff3;" onclick="setColor('#ff9ff3')"></div>
                     <div class="color-swatch" style="background-color: #f368e0;" onclick="setColor('#f368e0')"></div>
+                    
+                    <!-- New Basic Colors -->
+                    <div class="color-swatch" style="background-color: #8B4513;" onclick="setColor('#8B4513')"></div> <!-- Brown -->
+                    <div class="color-swatch" style="background-color: #000000;" onclick="setColor('#000000')"></div> <!-- Black -->
+                    <div class="color-swatch" style="background-color: #C0C0C0;" onclick="setColor('#C0C0C0')"></div> <!-- Silver -->
+                    <div class="color-swatch" style="background-color: #808080;" onclick="setColor('#808080')"></div> <!-- Grey -->
+                    <div class="color-swatch" style="background-color: #FFFFFF; border: 1px solid #ccc;" onclick="setColor('#FFFFFF')"></div> <!-- White -->
+                    <div class="color-swatch" style="background-color: #FFD700;" onclick="setColor('#FFD700')"></div> <!-- Gold -->
+                    <div class="color-swatch" style="background-color: #964B00;" onclick="setColor('#964B00')"></div> <!-- Dark Brown -->
+                    <div class="color-swatch" style="background-color: #FF69B4;" onclick="setColor('#FF69B4')"></div> <!-- Hot Pink -->
+                    <div class="color-swatch" style="background-color: #00CED1;" onclick="setColor('#00CED1')"></div> <!-- Dark Turquoise -->
+                    <div class="color-swatch" style="background-color: #228B22;" onclick="setColor('#228B22')"></div> <!-- Forest Green -->
+                    <div class="color-swatch" style="background-color: #8A2BE2;" onclick="setColor('#8A2BE2')"></div> <!-- Blue Violet -->
+                    <div class="color-swatch" style="background-color: #DC143C;" onclick="setColor('#DC143C')"></div> <!-- Crimson -->
+                    <div class="color-swatch" style="background-color: #FF8C00;" onclick="setColor('#FF8C00')"></div> <!-- Dark Orange -->
+                    <div class="color-swatch" style="background-color: #4B0082;" onclick="setColor('#4B0082')"></div> <!-- Indigo -->
+                    <div class="color-swatch" style="background-color: #00FF00;" onclick="setColor('#00FF00')"></div> <!-- Lime -->
                 </div>
             </div>
             
@@ -501,6 +530,7 @@
         let currentSection = 1;
         let currentTool = 'draw';
         let currentBrushType = 'marker';
+        let currentOpacity = 1.0; // 0 to 1
         let isDrawing = false;
         let canvas, ctx, baseImage;
         let undoStack = [];
@@ -752,18 +782,19 @@
                 if (currentBrushType === 'crayon') {
                     // Crayon effect - slightly rough texture
                     ctx.lineWidth = ctx.lineWidth * (0.9 + Math.random() * 0.2);
+                    ctx.globalAlpha = currentOpacity;
                 } else if (currentBrushType === 'watercolor') {
                     // Watercolor effect - semi-transparent with blending
-                    ctx.globalAlpha = 0.7;
+                    ctx.globalAlpha = currentOpacity * 0.7;
+                } else {
+                    // Marker effect
+                    ctx.globalAlpha = currentOpacity;
                 }
                 
                 ctx.lineTo(x, y);
                 ctx.stroke();
                 ctx.beginPath();
                 ctx.moveTo(x, y);
-                
-                // Reset global alpha for next stroke
-                ctx.globalAlpha = 1.0;
             }
         }
         
@@ -905,6 +936,7 @@
                     let finalR = fillRGB.r;
                     let finalG = fillRGB.g;
                     let finalB = fillRGB.b;
+                    let finalA = 255; // Default to fully opaque
                     
                     switch(currentBrushType) {
                         case 'crayon':
@@ -913,6 +945,7 @@
                             finalR = clamp(finalR + noise, 0, 255);
                             finalG = clamp(finalG + noise, 0, 255);
                             finalB = clamp(finalB + noise, 0, 255);
+                            finalA = currentOpacity * 255;
                             break;
                         case 'watercolor':
                             // Watercolor effect - slight transparency and color blending
@@ -920,15 +953,19 @@
                             finalR = Math.round(finalR * blend + r * (1 - blend));
                             finalG = Math.round(finalG * blend + g * (1 - blend));
                             finalB = Math.round(finalB * blend + b * (1 - blend));
+                            finalA = currentOpacity * 255 * 0.7;
                             break;
-                        // Marker uses solid color with no modification
+                        case 'marker':
+                            // Marker effect - solid color with opacity
+                            finalA = currentOpacity * 255;
+                            break;
                     }
                     
                     // Fill the pixel
                     data[pos] = finalR;
                     data[pos + 1] = finalG;
                     data[pos + 2] = finalB;
-                    data[pos + 3] = 255; // Full opacity
+                    data[pos + 3] = Math.round(finalA);
                     
                     // Mark as visited
                     visited[y * width + x] = 1;
@@ -993,6 +1030,12 @@
         // Initialize brush size display
         document.getElementById('brushSize').addEventListener('input', function() {
             document.getElementById('brushSizeValue').textContent = this.value;
+        });
+        
+        // Initialize opacity slider
+        document.getElementById('opacitySlider').addEventListener('input', function() {
+            currentOpacity = this.value / 100;
+            document.getElementById('opacityValue').textContent = this.value + '%';
         });
         
         // Initialize with Animals section
