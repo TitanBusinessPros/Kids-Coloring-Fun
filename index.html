@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🎨 Cool Coloring Studio 🖌️</title>
+    <title>🎨 Artistic Coloring Studio 🖌️</title>
     <style>
         * {
             margin: 0;
@@ -215,6 +215,32 @@
             width: 120px;
         }
         
+        .brush-type-selector {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .brush-type-btn {
+            padding: 10px 15px;
+            border: 1px solid rgba(100, 150, 255, 0.3);
+            background: rgba(60, 60, 80, 0.8);
+            color: #e0e0e0;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: all 0.2s;
+        }
+        
+        .brush-type-btn:hover {
+            background: rgba(100, 150, 255, 0.3);
+        }
+        
+        .brush-type-btn.active {
+            background: rgba(110, 80, 220, 0.6);
+            color: white;
+            border-color: rgba(150, 120, 255, 0.5);
+        }
+        
         .canvas-container {
             position: relative;
             display: inline-block;
@@ -363,7 +389,7 @@
 </head>
 <body>
     <div class="container">
-        <h1>🎨 Cool Coloring Studio 🖌️</h1>
+        <h1>🎨 Artistic Coloring Studio 🖌️</h1>
         
         <div id="sectionSelection">
             <div class="sections">
@@ -403,6 +429,15 @@
                     <label for="brushSize">Brush Size:</label>
                     <input type="range" id="brushSize" class="brush-size" min="1" max="50" value="5">
                     <span id="brushSizeValue">5</span>
+                </div>
+                
+                <div class="tool-group">
+                    <label>Brush Type:</label>
+                    <div class="brush-type-selector">
+                        <button class="brush-type-btn active" id="markerBtn" onclick="setBrushType('marker')">🖊️ Marker</button>
+                        <button class="brush-type-btn" id="crayonBtn" onclick="setBrushType('crayon')">🖍️ Crayon</button>
+                        <button class="brush-type-btn" id="watercolorBtn" onclick="setBrushType('watercolor')">🎨 Watercolor</button>
+                    </div>
                 </div>
                 
                 <div class="color-palette">
@@ -465,11 +500,15 @@
 
         let currentSection = 1;
         let currentTool = 'draw';
+        let currentBrushType = 'marker';
         let isDrawing = false;
         let canvas, ctx, baseImage;
         let undoStack = [];
         let redoStack = [];
         let maxUndoSteps = 20;
+        
+        // Create texture canvases for brush effects
+        let crayonTextureCanvas, watercolorTextureCanvas;
         
         function selectSection(section) {
             currentSection = section;
@@ -520,6 +559,9 @@
             redoStack = [];
             updateUndoButton();
             
+            // Create brush texture canvases
+            createBrushTextures();
+            
             // Show loading message
             canvas.width = 600;
             canvas.height = 600;
@@ -568,6 +610,37 @@
             baseImage.src = imgUrl;
         }
         
+        function createBrushTextures() {
+            // Create crayon texture
+            crayonTextureCanvas = document.createElement('canvas');
+            crayonTextureCanvas.width = 20;
+            crayonTextureCanvas.height = 20;
+            const crayonCtx = crayonTextureCanvas.getContext('2d');
+            
+            // Create a grainy texture for crayon
+            for (let i = 0; i < 100; i++) {
+                const x = Math.random() * 20;
+                const y = Math.random() * 20;
+                const size = Math.random() * 2;
+                crayonCtx.fillStyle = `rgba(0, 0, 0, ${Math.random() * 0.3})`;
+                crayonCtx.fillRect(x, y, size, size);
+            }
+            
+            // Create watercolor texture
+            watercolorTextureCanvas = document.createElement('canvas');
+            watercolorTextureCanvas.width = 50;
+            watercolorTextureCanvas.height = 50;
+            const watercolorCtx = watercolorTextureCanvas.getContext('2d');
+            
+            // Create a soft, blended texture for watercolor
+            const gradient = watercolorCtx.createRadialGradient(25, 25, 0, 25, 25, 25);
+            gradient.addColorStop(0, 'rgba(255, 255, 255, 0.8)');
+            gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+            
+            watercolorCtx.fillStyle = gradient;
+            watercolorCtx.fillRect(0, 0, 50, 50);
+        }
+        
         function handleFileUpload(files) {
             if (files.length > 0) {
                 const file = files[0];
@@ -614,6 +687,13 @@
             document.getElementById('eraseBtn').classList.toggle('active', tool === 'erase');
         }
         
+        function setBrushType(type) {
+            currentBrushType = type;
+            document.getElementById('markerBtn').classList.toggle('active', type === 'marker');
+            document.getElementById('crayonBtn').classList.toggle('active', type === 'crayon');
+            document.getElementById('watercolorBtn').classList.toggle('active', type === 'watercolor');
+        }
+        
         function setColor(color) {
             document.getElementById('colorPicker').value = color;
         }
@@ -644,6 +724,9 @@
                 } else {
                     ctx.globalCompositeOperation = 'source-over';
                 }
+                
+                // Apply brush type settings
+                applyBrushSettings();
             }
         }
         
@@ -657,15 +740,48 @@
             const y = (e.clientY - rect.top) * scaleY;
             
             if (currentTool === 'draw' || currentTool === 'erase') {
+                // Apply brush type settings
+                applyBrushSettings();
+                
                 ctx.strokeStyle = currentTool === 'erase' ? 'rgba(0,0,0,1)' : document.getElementById('colorPicker').value;
                 ctx.lineWidth = document.getElementById('brushSize').value;
                 ctx.lineCap = 'round';
                 ctx.lineJoin = 'round';
                 
+                // Apply brush-specific effects
+                if (currentBrushType === 'crayon') {
+                    // Crayon effect - slightly rough texture
+                    ctx.lineWidth = ctx.lineWidth * (0.9 + Math.random() * 0.2);
+                } else if (currentBrushType === 'watercolor') {
+                    // Watercolor effect - semi-transparent with blending
+                    ctx.globalAlpha = 0.7;
+                }
+                
                 ctx.lineTo(x, y);
                 ctx.stroke();
                 ctx.beginPath();
                 ctx.moveTo(x, y);
+                
+                // Reset global alpha for next stroke
+                ctx.globalAlpha = 1.0;
+            }
+        }
+        
+        function applyBrushSettings() {
+            // Apply settings based on brush type
+            switch(currentBrushType) {
+                case 'marker':
+                    ctx.lineCap = 'round';
+                    ctx.lineJoin = 'round';
+                    break;
+                case 'crayon':
+                    ctx.lineCap = 'square';
+                    ctx.lineJoin = 'miter';
+                    break;
+                case 'watercolor':
+                    ctx.lineCap = 'round';
+                    ctx.lineJoin = 'round';
+                    break;
             }
         }
         
@@ -677,8 +793,9 @@
             
             isDrawing = false;
             ctx.beginPath();
-            // Reset composite operation
+            // Reset composite operation and alpha
             ctx.globalCompositeOperation = 'source-over';
+            ctx.globalAlpha = 1.0;
         }
         
         function handleTouch(e) {
@@ -729,7 +846,7 @@
             undoBtn.disabled = undoStack.length === 0;
         }
         
-        // Improved Flood Fill Algorithm with fixed tolerance of 100
+        // Improved Flood Fill Algorithm with fixed tolerance of 100 and brush effects
         function floodFill(startX, startY, fillColor) {
             const tolerance = 100; // Fixed tolerance as requested
             const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
@@ -755,6 +872,17 @@
             const stack = [[startX, startY]];
             const visited = new Uint8Array(width * height);
             
+            // Apply brush type to fill
+            applyBrushFillEffect(data, width, height, stack, visited, startR, startG, startB, fillRGB, tolerance);
+            
+            // Put the modified image data back to canvas
+            ctx.putImageData(imageData, 0, 0);
+            
+            // Update undo button
+            updateUndoButton();
+        }
+        
+        function applyBrushFillEffect(data, width, height, stack, visited, startR, startG, startB, fillRGB, tolerance) {
             while (stack.length > 0) {
                 const [x, y] = stack.pop();
                 const pos = (y * width + x) * 4;
@@ -773,10 +901,33 @@
                 
                 // Check if pixel matches the target color within tolerance
                 if (a > 10 && colorsMatch({r, g, b}, {r: startR, g: startG, b: startB}, tolerance)) {
+                    // Apply brush-specific fill effect
+                    let finalR = fillRGB.r;
+                    let finalG = fillRGB.g;
+                    let finalB = fillRGB.b;
+                    
+                    switch(currentBrushType) {
+                        case 'crayon':
+                            // Crayon effect - add some texture and variation
+                            const noise = Math.random() * 30 - 15;
+                            finalR = clamp(finalR + noise, 0, 255);
+                            finalG = clamp(finalG + noise, 0, 255);
+                            finalB = clamp(finalB + noise, 0, 255);
+                            break;
+                        case 'watercolor':
+                            // Watercolor effect - slight transparency and color blending
+                            const blend = 0.8 + Math.random() * 0.2;
+                            finalR = Math.round(finalR * blend + r * (1 - blend));
+                            finalG = Math.round(finalG * blend + g * (1 - blend));
+                            finalB = Math.round(finalB * blend + b * (1 - blend));
+                            break;
+                        // Marker uses solid color with no modification
+                    }
+                    
                     // Fill the pixel
-                    data[pos] = fillRGB.r;
-                    data[pos + 1] = fillRGB.g;
-                    data[pos + 2] = fillRGB.b;
+                    data[pos] = finalR;
+                    data[pos + 1] = finalG;
+                    data[pos + 2] = finalB;
                     data[pos + 3] = 255; // Full opacity
                     
                     // Mark as visited
@@ -789,12 +940,10 @@
                     stack.push([x, y - 1]);
                 }
             }
-            
-            // Put the modified image data back to canvas
-            ctx.putImageData(imageData, 0, 0);
-            
-            // Update undo button
-            updateUndoButton();
+        }
+        
+        function clamp(value, min, max) {
+            return Math.min(Math.max(value, min), max);
         }
         
         function colorsMatch(c1, c2, tolerance) {
