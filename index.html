@@ -362,6 +362,86 @@
             box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
         }
         
+        /* Stamp styles */
+        .stamp-toolbar {
+            display: none;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 15px;
+            padding: 15px;
+            background: rgba(40, 40, 60, 0.7);
+            border-radius: 15px;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid rgba(100, 150, 255, 0.2);
+            width: 100%;
+            max-width: 900px;
+        }
+        
+        .stamp-toolbar.active {
+            display: flex;
+        }
+        
+        .stamp-category {
+            display: none;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 10px;
+            width: 100%;
+        }
+        
+        .stamp-category.active {
+            display: flex;
+        }
+        
+        .stamp-btn {
+            padding: 8px 15px;
+            border: 1px solid rgba(100, 150, 255, 0.3);
+            background: rgba(60, 60, 80, 0.8);
+            color: #e0e0e0;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: all 0.2s;
+        }
+        
+        .stamp-btn:hover {
+            background: rgba(100, 150, 255, 0.3);
+        }
+        
+        .stamp-btn.active {
+            background: rgba(110, 80, 220, 0.6);
+            color: white;
+            border-color: rgba(150, 120, 255, 0.5);
+        }
+        
+        .stamp-preview {
+            width: 60px;
+            height: 60px;
+            border: 2px solid rgba(100, 150, 255, 0.3);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 30px;
+            background: rgba(255, 255, 255, 0.9);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        
+        .stamp-preview:hover {
+            transform: scale(1.1);
+            border-color: rgba(100, 150, 255, 0.7);
+        }
+        
+        .stamp-preview img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+        
         @media (max-width: 768px) {
             .toolbar {
                 flex-direction: column;
@@ -388,6 +468,12 @@
             
             .color-palette {
                 max-width: 100%;
+            }
+            
+            .stamp-preview {
+                width: 50px;
+                height: 50px;
+                font-size: 25px;
             }
         }
     </style>
@@ -421,6 +507,7 @@
                     <button class="tool-btn active" id="drawBtn" onclick="setTool('draw')">✏️ Draw</button>
                     <button class="tool-btn" id="fillBtn" onclick="setTool('fill')">🪣 Fill</button>
                     <button class="tool-btn" id="eraseBtn" onclick="setTool('erase')">🧽 Erase</button>
+                    <button class="tool-btn" id="stampBtn" onclick="setTool('stamp')">🖼️ Stamp</button>
                     <button class="tool-btn" onclick="clearCanvas()">🗑️ Clear</button>
                     <button class="tool-btn" id="undoBtn" onclick="undo()" disabled>↶ Undo</button>
                 </div>
@@ -481,6 +568,77 @@
                 </div>
             </div>
             
+            <!-- Stamp Toolbar -->
+            <div id="stampToolbar" class="stamp-toolbar">
+                <div class="tool-group">
+                    <label>Stamp Category:</label>
+                    <div class="brush-type-selector">
+                        <button class="stamp-btn active" onclick="selectStampCategory('grass')">🌿 Grass & Food</button>
+                        <button class="stamp-btn" onclick="selectStampCategory('insects')">🐞 Insects</button>
+                        <button class="stamp-btn" onclick="selectStampCategory('random')">🎲 Random</button>
+                    </div>
+                </div>
+                
+                <!-- Grass & Food Stamps -->
+                <div id="grassStamps" class="stamp-category active">
+                    <div class="stamp-preview" onclick="selectStamp('grass1')">🌱</div>
+                    <div class="stamp-preview" onclick="selectStamp('grass2')">🌿</div>
+                    <div class="stamp-preview" onclick="selectStamp('grass3')">🍃</div>
+                    <div class="stamp-preview" onclick="selectStamp('grass4')">🌾</div>
+                    <div class="stamp-preview" onclick="selectStamp('fruit1')">🍎</div>
+                    <div class="stamp-preview" onclick="selectStamp('fruit2')">🍌</div>
+                    <div class="stamp-preview" onclick="selectStamp('fruit3')">🍇</div>
+                    <div class="stamp-preview" onclick="selectStamp('fruit4')">🍓</div>
+                    <div class="stamp-preview" onclick="selectStamp('fruit5')">🍊</div>
+                    <div class="stamp-preview" onclick="selectStamp('fruit6')">🍉</div>
+                    <div class="stamp-preview" onclick="selectStamp('fruit7')">🥦</div>
+                    <div class="stamp-preview" onclick="selectStamp('fruit8')">🥕</div>
+                </div>
+                
+                <!-- Insect Stamps -->
+                <div id="insectsStamps" class="stamp-category">
+                    <div class="stamp-preview" onclick="selectStamp('insect1')">🐞</div>
+                    <div class="stamp-preview" onclick="selectStamp('insect2')">🦋</div>
+                    <div class="stamp-preview" onclick="selectStamp('insect3')">🐝</div>
+                    <div class="stamp-preview" onclick="selectStamp('insect4')">🐛</div>
+                    <div class="stamp-preview" onclick="selectStamp('insect6')">🦗</div>
+                    <div class="stamp-preview" onclick="selectStamp('insect7')">🕷️</div>
+                    <div class="stamp-preview" onclick="selectStamp('insect8')">🐜</div>
+                    <div class="stamp-preview" onclick="selectStamp('insect9')">🦟</div>
+                    <div class="stamp-preview" onclick="selectStamp('insect12')">🐌</div>
+                </div>
+                
+                <!-- Random Stamps -->
+                <div id="randomStamps" class="stamp-category">
+                    <div class="stamp-preview" onclick="selectStamp('random1')">⭐</div>
+                    <div class="stamp-preview" onclick="selectStamp('random2')">🌈</div>
+                    <div class="stamp-preview" onclick="selectStamp('random3')">🦄</div>
+                    <div class="stamp-preview" onclick="selectStamp('random4')">🦋</div>
+                    <div class="stamp-preview" onclick="selectStamp('random5')">🐝</div>
+                    <div class="stamp-preview" onclick="selectStamp('random6')">🐢</div>
+                    <div class="stamp-preview" onclick="selectStamp('random7')">🐙</div>
+                    <div class="stamp-preview" onclick="selectStamp('random8')">🦉</div>
+                    <div class="stamp-preview" onclick="selectStamp('random9')">🦕</div>
+                    <div class="stamp-preview" onclick="selectStamp('random10')">🦖</div>
+                    <div class="stamp-preview" onclick="selectStamp('random11')">🍕</div>
+                    <div class="stamp-preview" onclick="selectStamp('random12')">🍦</div>
+                    <div class="stamp-preview" onclick="selectStamp('random13')">🌸</div>
+                    <div class="stamp-preview" onclick="selectStamp('random14')">🌹</div>
+                    <div class="stamp-preview" onclick="selectStamp('random15')">🌺</div>
+                    <div class="stamp-preview" onclick="selectStamp('random16')">🌻</div>
+                    <div class="stamp-preview" onclick="selectStamp('random17')">🌼</div>
+                    <div class="stamp-preview" onclick="selectStamp('random18')">💐</div>
+                    <div class="stamp-preview" onclick="selectStamp('random19')">🌷</div>
+                    <div class="stamp-preview" onclick="selectStamp('random20')">🥀</div>
+                </div>
+                
+                <div class="tool-group">
+                    <label for="stampSize">Stamp Size:</label>
+                    <input type="range" id="stampSize" class="brush-size" min="10" max="100" value="30">
+                    <span id="stampSizeValue">30</span>
+                </div>
+            </div>
+            
             <div class="canvas-container">
                 <canvas id="coloringCanvas"></canvas>
             </div>
@@ -527,6 +685,56 @@
             ]
         };
 
+        // ===== STAMP CONFIGURATION =====
+        const stampLibrary = {
+            // Grass & Food stamps
+            grass1: { emoji: '🌱', size: 30 },
+            grass2: { emoji: '🌿', size: 30 },
+            grass3: { emoji: '🍃', size: 30 },
+            grass4: { emoji: '🌾', size: 30 },
+            fruit1: { emoji: '🍎', size: 30 },
+            fruit2: { emoji: '🍌', size: 30 },
+            fruit3: { emoji: '🍇', size: 30 },
+            fruit4: { emoji: '🍓', size: 30 },
+            fruit5: { emoji: '🍊', size: 30 },
+            fruit6: { emoji: '🍉', size: 30 },
+            fruit7: { emoji: '🥦', size: 30 },
+            fruit8: { emoji: '🥕', size: 30 },
+            
+            // Insect stamps
+            insect1: { emoji: '🐞', size: 30 },
+            insect2: { emoji: '🦋', size: 30 },
+            insect3: { emoji: '🐝', size: 30 },
+            insect4: { emoji: '🐛', size: 30 },
+            insect6: { emoji: '🦗', size: 30 },
+            insect7: { emoji: '🕷️', size: 30 },
+            insect8: { emoji: '🐜', size: 30 },
+            insect9: { emoji: '🦟', size: 30 },
+            insect12: { emoji: '🐌', size: 30 },
+            
+            // Random stamps (including the flower stamps)
+            random1: { emoji: '⭐', size: 30 },
+            random2: { emoji: '🌈', size: 30 },
+            random3: { emoji: '🦄', size: 30 },
+            random4: { emoji: '🦋', size: 30 },
+            random5: { emoji: '🐝', size: 30 },
+            random6: { emoji: '🐢', size: 30 },
+            random7: { emoji: '🐙', size: 30 },
+            random8: { emoji: '🦉', size: 30 },
+            random9: { emoji: '🦕', size: 30 },
+            random10: { emoji: '🦖', size: 30 },
+            random11: { emoji: '🍕', size: 30 },
+            random12: { emoji: '🍦', size: 30 },
+            random13: { emoji: '🌸', size: 30 },
+            random14: { emoji: '🌹', size: 30 },
+            random15: { emoji: '🌺', size: 30 },
+            random16: { emoji: '🌻', size: 30 },
+            random17: { emoji: '🌼', size: 30 },
+            random18: { emoji: '💐', size: 30 },
+            random19: { emoji: '🌷', size: 30 },
+            random20: { emoji: '🥀', size: 30 }
+        };
+
         let currentSection = 1;
         let currentTool = 'draw';
         let currentBrushType = 'marker';
@@ -536,6 +744,8 @@
         let undoStack = [];
         let redoStack = [];
         let maxUndoSteps = 20;
+        let currentStamp = null;
+        let stampSize = 30;
         
         // Create texture canvases for brush effects
         let crayonTextureCanvas, watercolorTextureCanvas;
@@ -715,6 +925,15 @@
             document.getElementById('drawBtn').classList.toggle('active', tool === 'draw');
             document.getElementById('fillBtn').classList.toggle('active', tool === 'fill');
             document.getElementById('eraseBtn').classList.toggle('active', tool === 'erase');
+            document.getElementById('stampBtn').classList.toggle('active', tool === 'stamp');
+            
+            // Show/hide stamp toolbar
+            const stampToolbar = document.getElementById('stampToolbar');
+            if (tool === 'stamp') {
+                stampToolbar.classList.add('active');
+            } else {
+                stampToolbar.classList.remove('active');
+            }
         }
         
         function setBrushType(type) {
@@ -726,6 +945,27 @@
         
         function setColor(color) {
             document.getElementById('colorPicker').value = color;
+        }
+        
+        function selectStampCategory(category) {
+            // Hide all stamp categories
+            document.getElementById('grassStamps').classList.remove('active');
+            document.getElementById('insectsStamps').classList.remove('active');
+            document.getElementById('randomStamps').classList.remove('active');
+            
+            // Show selected category
+            document.getElementById(category + 'Stamps').classList.add('active');
+            
+            // Update active button
+            const buttons = document.querySelectorAll('.stamp-btn');
+            buttons.forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+        }
+        
+        function selectStamp(stampId) {
+            currentStamp = stampId;
         }
         
         function startDrawing(e) {
@@ -741,6 +981,12 @@
                 
                 const color = document.getElementById('colorPicker').value;
                 floodFill(x, y, color);
+            } else if (currentTool === 'stamp' && currentStamp) {
+                // Save state before stamping
+                saveState();
+                
+                // Apply stamp at click position
+                applyStamp(x, y, currentStamp);
             } else {
                 isDrawing = true;
                 const mouseX = (e.clientX - rect.left) * scaleX;
@@ -814,6 +1060,29 @@
                     ctx.lineJoin = 'round';
                     break;
             }
+        }
+        
+        function applyStamp(x, y, stampId) {
+            const stamp = stampLibrary[stampId];
+            if (!stamp) return;
+            
+            const size = document.getElementById('stampSize').value;
+            const color = document.getElementById('colorPicker').value;
+            
+            // Save current context state
+            ctx.save();
+            
+            // Set color and font size
+            ctx.fillStyle = color;
+            ctx.font = `${size}px Arial, sans-serif`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            
+            // Draw the stamp
+            ctx.fillText(stamp.emoji, x, y);
+            
+            // Restore context state
+            ctx.restore();
         }
         
         function stopDrawing() {
@@ -1036,6 +1305,11 @@
         document.getElementById('opacitySlider').addEventListener('input', function() {
             currentOpacity = this.value / 100;
             document.getElementById('opacityValue').textContent = this.value + '%';
+        });
+        
+        // Initialize stamp size display
+        document.getElementById('stampSize').addEventListener('input', function() {
+            document.getElementById('stampSizeValue').textContent = this.value;
         });
         
         // Initialize with Animals section
